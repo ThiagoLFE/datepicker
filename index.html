@@ -21,14 +21,19 @@
             </div>
 
             <!--POPOVER-->
-            <div id="popover-root" class="relative">
-                <button id="popover-trigger" class="btn">Abrir popover</button>
+            <div id="popover-root" class="relative inline-block">
+                <button id="popover-trigger" class="btn">
+                    Abrir calendário
+                </button>
 
                 <div
                     id="popover-content"
-                    class="hidden absolute top-full left-0 mt-2 w-64 rounded border border-gray-300 bg-white p-4 shadow"
+                    class="hidden absolute z-50 w-80 rounded-xl border border-base-300 bg-base-100 p-4 shadow-xl"
                 >
-                    <p>Olá, eu sou um popover simples.</p>
+                    <p class="font-medium">Popover base</p>
+                    <p class="text-sm opacity-70">
+                        Aqui depois entra o calendário.
+                    </p>
                 </div>
             </div>
         </main>

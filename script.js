@@ -97,19 +97,71 @@ inputDate.inputElement.addEventListener("input", (evt) => handleInput(evt));
 //                  INPUT popover
 //  ===========================================
 
-// Elements
 const popoverRoot = document.getElementById("popover-root");
 const popoverTrigger = document.getElementById("popover-trigger");
 const popoverContent = document.getElementById("popover-content");
 
-// Helpers
+const POSITION_CLASSES = ["top-full", "bottom-full", "mt-2", "mb-2", "left-0"];
+
+function clearPopoverPositionClasses() {
+    POSITION_CLASSES.forEach((className) => {
+        popoverContent.classList.remove(className);
+    });
+}
+
+function applyPopoverBottom() {
+    clearPopoverPositionClasses();
+
+    popoverContent.classList.add("top-full", "mt-2", "left-0");
+}
+
+function applyPopoverTop() {
+    clearPopoverPositionClasses();
+
+    popoverContent.classList.add("bottom-full", "mb-2", "left-0");
+}
+
+function showPopoverForMeasure() {
+    popoverContent.classList.remove("hidden");
+    popoverContent.classList.add("invisible");
+}
+
+function hideMeasureState() {
+    popoverContent.classList.remove("invisible");
+}
+
+function resolvePopoverVerticalPosition() {
+    showPopoverForMeasure();
+
+    applyPopoverBottom();
+
+    const triggerRect = popoverTrigger.getBoundingClientRect();
+    const contentRect = popoverContent.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+
+    const spaceBelow = viewportHeight - triggerRect.bottom;
+    const spaceAbove = triggerRect.top;
+
+    const fitsBelow = spaceBelow >= contentRect.height + 8;
+    const fitsAbove = spaceAbove >= contentRect.height + 8;
+
+    if (fitsBelow || !fitsAbove) {
+        applyPopoverBottom();
+    } else {
+        applyPopoverTop();
+    }
+
+    hideMeasureState();
+}
 
 function openPopover() {
     popoverContent.classList.remove("hidden");
+    resolvePopoverVerticalPosition();
 }
 
 function closePopover() {
     popoverContent.classList.add("hidden");
+    popoverContent.classList.remove("invisible");
 }
 
 function togglePopover() {
@@ -123,14 +175,23 @@ function togglePopover() {
     closePopover();
 }
 
-// Listeners
-
-popoverTrigger.addEventListener("click", togglePopover);
+popoverTrigger.addEventListener("click", (event) => {
+    event.stopPropagation();
+    togglePopover();
+});
 
 document.addEventListener("click", (event) => {
-    const clickOnPopover = popoverRoot.contains(event.target);
+    const clickedInsidePopover = popoverRoot.contains(event.target);
 
-    if (!clickOnPopover) {
+    if (!clickedInsidePopover) {
         closePopover();
+    }
+});
+
+window.addEventListener("resize", () => {
+    const isOpen = !popoverContent.classList.contains("hidden");
+
+    if (isOpen) {
+        resolvePopoverVerticalPosition();
     }
 });
