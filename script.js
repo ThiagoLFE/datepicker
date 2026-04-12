@@ -97,6 +97,40 @@ inputDate.inputElement.addEventListener("input", (evt) => handleInput(evt));
 //                  INPUT popover
 //  ===========================================
 
-const rootPopover = document.getElementById("popover-root");
-const trickerPopover = document.getElementById("popover-trigger");
-const contentPopover = document.getElementById("popover-content");
+// Elements
+const popoverRoot = document.getElementById("popover-root");
+const popoverTrigger = document.getElementById("popover-trigger");
+const popoverContent = document.getElementById("popover-content");
+
+// Helpers
+
+function openPopover() {
+    popoverContent.classList.remove("hidden");
+}
+
+function closePopover() {
+    popoverContent.classList.add("hidden");
+}
+
+function togglePopover() {
+    const isHidden = popoverContent.classList.contains("hidden");
+
+    if (isHidden) {
+        openPopover();
+        return;
+    }
+
+    closePopover();
+}
+
+// Listeners
+
+popoverTrigger.addEventListener("click", togglePopover);
+
+document.addEventListener("click", (event) => {
+    const clickOnPopover = popoverRoot.contains(event.target);
+
+    if (!clickOnPopover) {
+        closePopover();
+    }
+});
