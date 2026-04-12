@@ -2,7 +2,6 @@
 //                  INPUT DATE
 //  ===========================================
 
-// Classe
 class InputDate {
     constructor(id) {
         this.inputElement = document.getElementById(id);
@@ -18,9 +17,19 @@ class InputDate {
 
         this.inputElement.value = this.displayValue;
     }
+
+    updateFromDate(date) {
+        if (!(date instanceof Date)) return;
+
+        const day = String(date.getUTCDate()).padStart(2, "0");
+        const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+        const year = String(date.getUTCFullYear());
+
+        const rawValue = `${day}${month}${year}`;
+        this.update(rawValue);
+    }
 }
 
-// Helpers
 function filterNumbers(value) {
     return value.replace(/\D/g, "");
 }
@@ -28,40 +37,37 @@ function filterNumbers(value) {
 function dateMaskABNT(value) {
     let maskValue = filterNumbers(value);
 
-    if (maskValue?.length <= 2) return maskValue;
+    if (maskValue.length <= 2) return maskValue;
 
-    if (maskValue?.length > 2 && maskValue?.length < 5)
+    if (maskValue.length < 5) {
         return maskValue.slice(0, 2) + "/" + maskValue.slice(2);
-
-    if (maskValue?.length >= 5) {
-        return (
-            maskValue.slice(0, 2) +
-            "/" +
-            maskValue.slice(2, 4) +
-            "/" +
-            maskValue.slice(4)
-        );
     }
+
+    return (
+        maskValue.slice(0, 2) +
+        "/" +
+        maskValue.slice(2, 4) +
+        "/" +
+        maskValue.slice(4, 8)
+    );
 }
 
 function parseDate(maskValue) {
-    let parts = maskValue.split("/");
+    const parts = maskValue.split("/");
 
-    if (parts?.length != 3) {
+    if (parts.length !== 3) {
         return null;
     }
 
-    const day = parseInt(parts[0]);
-    const month = parseInt(parts[1]) - 1; // this -1 is essencial because the months in Date starts in 0, and the input of user every time is 1 more.
-    const year = parseInt(parts[2]);
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const year = parseInt(parts[2], 10);
 
     if (year < 1000) {
         return null;
     }
 
     const date = new Date(Date.UTC(year, month, day));
-
-    console.log(date);
 
     const isDateValid =
         date.getUTCDate() === day &&
@@ -71,6 +77,7 @@ function parseDate(maskValue) {
     if (!isDateValid) {
         return null;
     }
+
     return date;
 }
 
@@ -78,23 +85,8 @@ function limitDateDigits(value) {
     return value.slice(0, 8);
 }
 
-// Elements
-
-const inputDate = new InputDate("date");
-
-// functions
-function handleInput(event) {
-    let newVal = event.target.value;
-
-    inputDate.update(newVal);
-
-    console.log(inputDate);
-}
-
-inputDate.inputElement.addEventListener("input", (evt) => handleInput(evt));
-
 //  ===========================================
-//                  INPUT popover
+//                  POPOVER
 //  ===========================================
 
 const popoverRoot = document.getElementById("popover-root");
@@ -111,13 +103,11 @@ function clearPopoverPositionClasses() {
 
 function applyPopoverBottom() {
     clearPopoverPositionClasses();
-
     popoverContent.classList.add("top-full", "mt-2", "left-0");
 }
 
 function applyPopoverTop() {
     clearPopoverPositionClasses();
-
     popoverContent.classList.add("bottom-full", "mb-2", "left-0");
 }
 
@@ -175,9 +165,171 @@ function togglePopover() {
     closePopover();
 }
 
+//  ===========================================
+//                  DATE PICKER
+//  ===========================================
+
+const inputDate = new InputDate("date");
+const calendarTitle = document.getElementById("calendar-title");
+const calendarGrid = document.getElementById("calendar-grid");
+const prevMonthButton = document.getElementById("prev-month");
+const nextMonthButton = document.getElementById("next-month");
+
+const MONTH_NAMES = [
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro",
+];
+
+const datePickerState = {
+    selectedDate: null,
+    viewDate: new Date(),
+};
+
+function getDaysInMonthUTC(year, monthIndex) {
+    return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+}
+
+function getFirstDayOfMonthUTC(year, monthIndex) {
+    return new Date(Date.UTC(year, monthIndex, 1)).getUTCDay();
+}
+
+function isSameUTCDate(dateA, dateB) {
+    if (!dateA || !dateB) return false;
+
+    return (
+        dateA.getUTCDate() === dateB.getUTCDate() &&
+        dateA.getUTCMonth() === dateB.getUTCMonth() &&
+        dateA.getUTCFullYear() === dateB.getUTCFullYear()
+    );
+}
+
+function formatCalendarTitle(viewDate) {
+    const month = MONTH_NAMES[viewDate.getUTCMonth()];
+    const year = viewDate.getUTCFullYear();
+    return `${month} ${year}`;
+}
+
+function createDayButton(label, extraClasses = []) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.className = [
+        "btn",
+        "btn-sm",
+        "btn-ghost",
+        "h-10",
+        "min-h-0",
+        "p-0",
+        ...extraClasses,
+    ].join(" ");
+    return button;
+}
+
+function renderCalendar() {
+    const year = datePickerState.viewDate.getUTCFullYear();
+    const month = datePickerState.viewDate.getUTCMonth();
+
+    calendarTitle.textContent = formatCalendarTitle(datePickerState.viewDate);
+    calendarGrid.innerHTML = "";
+
+    const firstDay = getFirstDayOfMonthUTC(year, month);
+    const daysInMonth = getDaysInMonthUTC(year, month);
+
+    for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement("div");
+        calendarGrid.appendChild(emptyCell);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const currentDate = new Date(Date.UTC(year, month, day));
+
+        const isSelected = isSameUTCDate(
+            currentDate,
+            datePickerState.selectedDate,
+        );
+
+        const button = createDayButton(
+            String(day),
+            isSelected ? ["btn-primary"] : [],
+        );
+
+        button.addEventListener("click", () => {
+            selectDate(currentDate);
+        });
+
+        calendarGrid.appendChild(button);
+    }
+}
+
+function selectDate(date) {
+    datePickerState.selectedDate = date;
+    datePickerState.viewDate = new Date(
+        Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1),
+    );
+
+    inputDate.updateFromDate(date);
+    renderCalendar();
+    closePopover();
+}
+
+function syncCalendarFromInput() {
+    if (!inputDate.dateValue) {
+        return;
+    }
+
+    datePickerState.selectedDate = inputDate.dateValue;
+    datePickerState.viewDate = new Date(
+        Date.UTC(
+            inputDate.dateValue.getUTCFullYear(),
+            inputDate.dateValue.getUTCMonth(),
+            1,
+        ),
+    );
+
+    renderCalendar();
+}
+
+function goToPreviousMonth() {
+    const year = datePickerState.viewDate.getUTCFullYear();
+    const month = datePickerState.viewDate.getUTCMonth();
+
+    datePickerState.viewDate = new Date(Date.UTC(year, month - 1, 1));
+    renderCalendar();
+}
+
+function goToNextMonth() {
+    const year = datePickerState.viewDate.getUTCFullYear();
+    const month = datePickerState.viewDate.getUTCMonth();
+
+    datePickerState.viewDate = new Date(Date.UTC(year, month + 1, 1));
+    renderCalendar();
+}
+
+//  ===========================================
+//                  LISTENERS
+//  ===========================================
+
+function handleInput(event) {
+    inputDate.update(event.target.value);
+    syncCalendarFromInput();
+}
+
+inputDate.inputElement.addEventListener("input", handleInput);
+
 popoverTrigger.addEventListener("click", (event) => {
     event.stopPropagation();
     togglePopover();
+    renderCalendar();
 });
 
 document.addEventListener("click", (event) => {
@@ -195,3 +347,15 @@ window.addEventListener("resize", () => {
         resolvePopoverVerticalPosition();
     }
 });
+
+prevMonthButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    goToPreviousMonth();
+});
+
+nextMonthButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    goToNextMonth();
+});
+
+renderCalendar();

@@ -2,38 +2,48 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Count</title>
+        <title>Date Picker</title>
         <link href="./output.css" rel="stylesheet" />
     </head>
     <body>
-        <main class="flex flex-col items-center justify-center mt-20 gap-10">
-            <h1 class="text-3xl uppercase tracking-wider">Input mask</h1>
-            <div class="border border-gray-500 w-200 flex p-10 gap-10">
-                <div>
-                    <span>Aniversário</span>
+        <main class="mt-20 flex justify-center">
+            <div id="popover-root" class="relative w-80">
+                <div class="flex gap-2">
                     <input
                         id="date"
                         type="text"
                         class="input w-full"
-                        placeholder="Digite seu aniversário"
+                        placeholder="DD/MM/AAAA"
                     />
+                    <button id="popover-trigger" class="btn">📅</button>
                 </div>
-            </div>
-
-            <!--POPOVER-->
-            <div id="popover-root" class="relative inline-block">
-                <button id="popover-trigger" class="btn">
-                    Abrir calendário
-                </button>
 
                 <div
                     id="popover-content"
                     class="hidden absolute z-50 w-80 rounded-xl border border-base-300 bg-base-100 p-4 shadow-xl"
                 >
-                    <p class="font-medium">Popover base</p>
-                    <p class="text-sm opacity-70">
-                        Aqui depois entra o calendário.
-                    </p>
+                    <div class="mb-4 flex items-center justify-between">
+                        <button id="prev-month" class="btn btn-sm">←</button>
+                        <span id="calendar-title" class="font-semibold"></span>
+                        <button id="next-month" class="btn btn-sm">→</button>
+                    </div>
+
+                    <div
+                        class="mb-2 grid grid-cols-7 text-center text-sm font-medium opacity-70"
+                    >
+                        <span>Dom</span>
+                        <span>Seg</span>
+                        <span>Ter</span>
+                        <span>Qua</span>
+                        <span>Qui</span>
+                        <span>Sex</span>
+                        <span>Sáb</span>
+                    </div>
+
+                    <div
+                        id="calendar-grid"
+                        class="grid grid-cols-7 gap-1"
+                    ></div>
                 </div>
             </div>
         </main>
