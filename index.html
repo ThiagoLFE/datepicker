@@ -1,51 +1,153 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
     <head>
         <meta charset="UTF-8" />
-        <title>Date Picker</title>
-        <link href="./output.css" rel="stylesheet" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Datepicker playground</title>
+        <script src="https://cdn.tailwindcss.com"></script>
     </head>
-    <body>
-        <main class="mt-20 flex justify-center">
-            <div id="popover-root" class="relative w-80">
-                <div class="flex gap-2">
-                    <input
-                        id="date"
-                        type="text"
-                        class="input w-full"
-                        placeholder="DD/MM/AAAA"
-                    />
-                    <button id="popover-trigger" class="btn">📅</button>
-                </div>
+    <body class="min-h-screen bg-zinc-100 p-8">
+        <main class="mx-auto flex max-w-5xl flex-col gap-10">
+            <section
+                class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
+            >
+                <h2 class="mb-4 text-xl font-semibold text-zinc-800">
+                    Single datepicker
+                </h2>
 
-                <div
-                    id="popover-content"
-                    class="hidden absolute z-50 w-80 rounded-xl border border-base-300 bg-base-100 p-4 shadow-xl"
-                >
-                    <div class="mb-4 flex items-center justify-between">
-                        <button id="prev-month" class="btn btn-sm">←</button>
-                        <span id="calendar-title" class="font-semibold"></span>
-                        <button id="next-month" class="btn btn-sm">→</button>
+                <div id="single-picker" class="relative max-w-sm">
+                    <div class="flex gap-2">
+                        <input
+                            id="single-date"
+                            type="text"
+                            class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 outline-none focus:border-blue-500"
+                            placeholder="DD/MM/AAAA"
+                        />
+                        <button
+                            id="single-trigger"
+                            type="button"
+                            class="rounded-lg border border-zinc-300 bg-white px-4 py-2 hover:bg-zinc-50"
+                        >
+                            📅
+                        </button>
                     </div>
 
                     <div
-                        class="mb-2 grid grid-cols-7 text-center text-sm font-medium opacity-70"
+                        id="single-popover"
+                        class="hidden absolute left-0 z-50 mt-2 w-full rounded-xl border border-zinc-200 bg-white p-4 shadow-xl"
                     >
-                        <span>Dom</span>
-                        <span>Seg</span>
-                        <span>Ter</span>
-                        <span>Qua</span>
-                        <span>Qui</span>
-                        <span>Sex</span>
-                        <span>Sáb</span>
+                        <div class="mb-4 flex items-center justify-between">
+                            <button
+                                id="single-prev"
+                                type="button"
+                                class="rounded-md border border-zinc-300 px-3 py-1 text-sm hover:bg-zinc-50"
+                            >
+                                ←
+                            </button>
+
+                            <span
+                                id="single-title"
+                                class="font-semibold text-zinc-800"
+                            ></span>
+
+                            <button
+                                id="single-next"
+                                type="button"
+                                class="rounded-md border border-zinc-300 px-3 py-1 text-sm hover:bg-zinc-50"
+                            >
+                                →
+                            </button>
+                        </div>
+
+                        <div
+                            class="mb-2 grid grid-cols-7 text-center text-xs font-semibold uppercase tracking-wide text-zinc-500"
+                        >
+                            <span>Dom</span>
+                            <span>Seg</span>
+                            <span>Ter</span>
+                            <span>Qua</span>
+                            <span>Qui</span>
+                            <span>Sex</span>
+                            <span>Sáb</span>
+                        </div>
+
+                        <div
+                            id="single-grid"
+                            class="grid grid-cols-7 gap-1"
+                        ></div>
+                    </div>
+                </div>
+            </section>
+
+            <section
+                class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
+            >
+                <h2 class="mb-4 text-xl font-semibold text-zinc-800">
+                    Range datepicker
+                </h2>
+
+                <div id="range-picker" class="relative max-w-2xl">
+                    <div class="grid grid-cols-2 gap-3">
+                        <input
+                            id="range-start"
+                            type="text"
+                            class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 outline-none focus:border-blue-500"
+                            placeholder="Data inicial"
+                        />
+                        <input
+                            id="range-end"
+                            type="text"
+                            class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 outline-none focus:border-blue-500"
+                            placeholder="Data final"
+                        />
                     </div>
 
                     <div
-                        id="calendar-grid"
-                        class="grid grid-cols-7 gap-1"
-                    ></div>
+                        id="range-popover"
+                        class="hidden absolute left-0 z-50 mt-2 w-full rounded-xl border border-zinc-200 bg-white p-4 shadow-xl"
+                    >
+                        <div class="mb-4 flex items-center justify-between">
+                            <button
+                                id="range-prev"
+                                type="button"
+                                class="rounded-md border border-zinc-300 px-3 py-1 text-sm hover:bg-zinc-50"
+                            >
+                                ←
+                            </button>
+
+                            <span
+                                id="range-title"
+                                class="font-semibold text-zinc-800"
+                            ></span>
+
+                            <button
+                                id="range-next"
+                                type="button"
+                                class="rounded-md border border-zinc-300 px-3 py-1 text-sm hover:bg-zinc-50"
+                            >
+                                →
+                            </button>
+                        </div>
+
+                        <div
+                            class="mb-2 grid grid-cols-7 text-center text-xs font-semibold uppercase tracking-wide text-zinc-500"
+                        >
+                            <span>Dom</span>
+                            <span>Seg</span>
+                            <span>Ter</span>
+                            <span>Qua</span>
+                            <span>Qui</span>
+                            <span>Sex</span>
+                            <span>Sáb</span>
+                        </div>
+
+                        <div
+                            id="range-grid"
+                            class="grid grid-cols-7 gap-1"
+                        ></div>
+                    </div>
                 </div>
-            </div>
+            </section>
         </main>
 
         <script src="script.js"></script>
