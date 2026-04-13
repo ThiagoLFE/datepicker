@@ -1,4 +1,7 @@
 "use strict";
+// ============================================================================
+// Shared constants and types
+// ============================================================================
 const MONTH_NAMES = [
     "Janeiro",
     "Fevereiro",
@@ -13,6 +16,9 @@ const MONTH_NAMES = [
     "Novembro",
     "Dezembro",
 ];
+// ============================================================================
+// DOM helpers
+// ============================================================================
 function getRequiredElement(id) {
     const element = document.getElementById(id);
     if (!(element instanceof HTMLElement)) {
@@ -20,6 +26,9 @@ function getRequiredElement(id) {
     }
     return element;
 }
+// ============================================================================
+// Input mask and date parsing helpers
+// ============================================================================
 function filterNumbers(value) {
     return value.replace(/\D/g, "");
 }
@@ -46,38 +55,42 @@ function parseDateFromMask(maskValue) {
     }
     if (year < 1000)
         return null;
-    const date = new Date(Date.UTC(year, month, day));
-    const isValid = date.getUTCDate() === day &&
-        date.getUTCMonth() === month &&
-        date.getUTCFullYear() === year;
+    const date = new Date(year, month, day);
+    const isValid = date.getDate() === day &&
+        date.getMonth() === month &&
+        date.getFullYear() === year;
     return isValid ? date : null;
 }
 function formatDateToMask(date) {
     if (!(date instanceof Date))
         return "";
-    const day = String(date.getUTCDate()).padStart(2, "0");
-    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-    const year = String(date.getUTCFullYear());
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = String(date.getFullYear());
     return `${day}/${month}/${year}`;
 }
-function normalizeUTCDate(date) {
+// ============================================================================
+//  date helpers
+// ============================================================================
+function normalizeDate(date) {
     if (!(date instanceof Date))
         return null;
-    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
-function isSameUTCDate(dateA, dateB) {
+function isSameDate(dateA, dateB) {
     if (!dateA || !dateB)
         return false;
-    return (dateA.getUTCDate() === dateB.getUTCDate() &&
-        dateA.getUTCMonth() === dateB.getUTCMonth() &&
-        dateA.getUTCFullYear() === dateB.getUTCFullYear());
+    return (dateA.getDate() === dateB.getDate() &&
+        dateA.getMonth() === dateB.getMonth() &&
+        dateA.getFullYear() === dateB.getFullYear());
 }
-function isDateBetweenUTC(date, start, end) {
+function isDateBetween(date, start, end) {
+    var _a, _b, _c;
     if (!date || !start || !end)
         return false;
-    const current = normalizeUTCDate(date)?.getTime();
-    const startTime = normalizeUTCDate(start)?.getTime();
-    const endTime = normalizeUTCDate(end)?.getTime();
+    const current = (_a = normalizeDate(date)) === null || _a === void 0 ? void 0 : _a.getTime();
+    const startTime = (_b = normalizeDate(start)) === null || _b === void 0 ? void 0 : _b.getTime();
+    const endTime = (_c = normalizeDate(end)) === null || _c === void 0 ? void 0 : _c.getTime();
     if (current === undefined ||
         startTime === undefined ||
         endTime === undefined) {
@@ -85,22 +98,24 @@ function isDateBetweenUTC(date, start, end) {
     }
     return current > startTime && current < endTime;
 }
-function getDaysInMonthUTC(year, monthIndex) {
-    return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+function getDaysInMonth(year, monthIndex) {
+    return new Date(year, monthIndex + 1, 0).getDate();
 }
-function getFirstDayOfMonthUTC(year, monthIndex) {
-    return new Date(Date.UTC(year, monthIndex, 1)).getUTCDay();
+function getFirstDayOfMonth(year, monthIndex) {
+    return new Date(year, monthIndex, 1).getDay();
 }
 function formatCalendarTitle(viewDate) {
-    return `${MONTH_NAMES[viewDate.getUTCMonth()]} ${viewDate.getUTCFullYear()}`;
+    return `${MONTH_NAMES[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
 }
+// ============================================================================
+// Component 1: input state wrapper
+// Keeps the raw digits, masked value, parsed date and DOM input in sync.
+// ============================================================================
 class InputDateBase {
-    inputElement;
-    label;
-    rawValue = "";
-    displayValue = "";
-    dateValue = null;
     constructor(id, label = id) {
+        this.rawValue = "";
+        this.displayValue = "";
+        this.dateValue = null;
         this.inputElement = getRequiredElement(id);
         this.label = label;
     }
@@ -111,16 +126,20 @@ class InputDateBase {
         this.inputElement.value = this.displayValue;
         if (this.dateValue) {
             console.log(`[${this.label}] valid date:`, {
-                mask: this.displayValue,
-                iso: this.dateValue.toISOString(),
-                timestamp: this.dateValue.getTime(),
+                inputElement: this.inputElement,
+                label: this.label,
+                rawValue: this.rawValue,
+                displayValue: this.displayValue,
+                dateValue: this.dateValue,
+                _iso: this.dateValue.toISOString(),
+                _timestamp: this.dateValue.getTime(),
             });
             return;
         }
         console.log(`[${this.label}] invalid or incomplete date, clearing current date`);
     }
     updateFromDate(date) {
-        const normalized = normalizeUTCDate(date);
+        const normalized = normalizeDate(date);
         if (!normalized)
             return;
         this.dateValue = normalized;
@@ -128,9 +147,13 @@ class InputDateBase {
         this.rawValue = filterNumbers(this.displayValue);
         this.inputElement.value = this.displayValue;
         console.log(`[${this.label}] valid date from calendar:`, {
-            mask: this.displayValue,
-            iso: this.dateValue.toISOString(),
-            timestamp: this.dateValue.getTime(),
+            inputElement: this.inputElement,
+            label: this.label,
+            rawValue: this.rawValue,
+            displayValue: this.displayValue,
+            dateValue: this.dateValue,
+            _iso: this.dateValue.toISOString(),
+            _timestamp: this.dateValue.getTime(),
         });
     }
     clear() {
@@ -140,21 +163,23 @@ class InputDateBase {
         this.inputElement.value = "";
     }
     getValidDateOrNull() {
-        return this.dateValue ? normalizeUTCDate(this.dateValue) : null;
+        return this.dateValue ? normalizeDate(this.dateValue) : null;
     }
 }
+// ============================================================================
+// Component 2: popover controller
+// Opens/closes the floating calendar and decides whether it should render
+// above or below the field depending on viewport space.
+// ============================================================================
 class PopoverController {
-    root;
-    content;
-    triggers;
-    positionClasses = [
-        "top-full",
-        "bottom-full",
-        "mt-2",
-        "mb-2",
-        "left-0",
-    ];
     constructor({ rootId, triggerIds, contentId }) {
+        this.positionClasses = [
+            "top-full",
+            "bottom-full",
+            "mt-2",
+            "mb-2",
+            "left-0",
+        ];
         this.root = getRequiredElement(rootId);
         this.content = getRequiredElement(contentId);
         this.triggers = triggerIds
@@ -163,44 +188,6 @@ class PopoverController {
             return element instanceof HTMLButtonElement;
         });
         this.bindEvents();
-    }
-    clearPositionClasses() {
-        this.positionClasses.forEach((className) => {
-            this.content.classList.remove(className);
-        });
-    }
-    applyBottom() {
-        this.clearPositionClasses();
-        this.content.classList.add("top-full", "mt-2", "left-0");
-    }
-    applyTop() {
-        this.clearPositionClasses();
-        this.content.classList.add("bottom-full", "mb-2", "left-0");
-    }
-    showForMeasure() {
-        this.content.classList.remove("hidden");
-        this.content.classList.add("invisible");
-    }
-    hideMeasureState() {
-        this.content.classList.remove("invisible");
-    }
-    resolveVerticalPosition() {
-        this.showForMeasure();
-        this.applyBottom();
-        const triggerRect = this.root.getBoundingClientRect();
-        const contentRect = this.content.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
-        const spaceBelow = viewportHeight - triggerRect.bottom;
-        const spaceAbove = triggerRect.top;
-        const fitsBelow = spaceBelow >= contentRect.height + 8;
-        const fitsAbove = spaceAbove >= contentRect.height + 8;
-        if (fitsBelow || !fitsAbove) {
-            this.applyBottom();
-        }
-        else {
-            this.applyTop();
-        }
-        this.hideMeasureState();
     }
     open() {
         this.content.classList.remove("hidden");
@@ -219,6 +206,44 @@ class PopoverController {
     }
     isOpen() {
         return !this.content.classList.contains("hidden");
+    }
+    clearPositionClasses() {
+        this.positionClasses.forEach((className) => {
+            this.content.classList.remove(className);
+        });
+    }
+    applyBottom() {
+        this.clearPositionClasses();
+        this.content.classList.add("top-full", "mt-2", "left-0");
+    }
+    applyTop() {
+        this.clearPositionClasses();
+        this.content.classList.add("bottom-full", "mb-2", "left-0");
+    }
+    showForMeasure() {
+        this.content.classList.remove("hidden");
+        this.content.classList.add("invisible");
+    }
+    unhideMeasureState() {
+        this.content.classList.remove("invisible");
+    }
+    resolveVerticalPosition() {
+        this.showForMeasure();
+        this.applyBottom();
+        const triggerRect = this.root.getBoundingClientRect();
+        const contentRect = this.content.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const spaceBelow = viewportHeight - triggerRect.bottom;
+        const spaceAbove = triggerRect.top;
+        const fitsBelow = spaceBelow >= contentRect.height + 8;
+        const fitsAbove = spaceAbove >= contentRect.height + 8;
+        if (fitsBelow || !fitsAbove) {
+            this.applyBottom();
+        }
+        else {
+            this.applyTop();
+        }
+        this.unhideMeasureState();
     }
     bindEvents() {
         this.triggers.forEach((trigger) => {
@@ -241,6 +266,10 @@ class PopoverController {
         });
     }
 }
+// ============================================================================
+// Component 3: shared calendar rendering
+// Renders one month grid and lets each picker decide what to do on selection.
+// ============================================================================
 function createDayButton(label, extraClasses = []) {
     const button = document.createElement("button");
     button.type = "button";
@@ -258,22 +287,48 @@ function createDayButton(label, extraClasses = []) {
     return button;
 }
 function renderCalendarGrid({ gridElement, titleElement, viewDate, selectedDate = null, rangeStart = null, rangeEnd = null, onSelectDate, }) {
-    const year = viewDate.getUTCFullYear();
-    const month = viewDate.getUTCMonth();
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
     titleElement.textContent = formatCalendarTitle(viewDate);
     gridElement.innerHTML = "";
-    const firstDay = getFirstDayOfMonthUTC(year, month);
-    const daysInMonth = getDaysInMonthUTC(year, month);
-    for (let index = 0; index < firstDay; index += 1) {
-        const emptyCell = document.createElement("div");
-        gridElement.appendChild(emptyCell);
+    const offset = getFirstDayOfMonth(year, month);
+    const daysInMonth = getDaysInMonth(year, month);
+    const daysInLastMonth = getDaysInMonth(year, month - 1);
+    let numDatesOnGrid = 0;
+    // Items about last month
+    for (let index = 0; index < offset; index += 1) {
+        // const emptyCell = document.createElement("div");
+        // gridElement.appendChild(emptyCell);
+        numDatesOnGrid++;
+        const day = daysInLastMonth + (index + 1) - offset;
+        const currentDate = new Date(year, month - 1, day);
+        const isSelected = isSameDate(currentDate, selectedDate);
+        const isStart = isSameDate(currentDate, rangeStart);
+        const isEnd = isSameDate(currentDate, rangeEnd);
+        const isBetween = isDateBetween(currentDate, rangeStart, rangeEnd);
+        const extraClasses = ["text-slate-500"];
+        if (isBetween) {
+            extraClasses.push("bg-orange-100", "text-orange-900");
+        }
+        if (isStart || isEnd) {
+            extraClasses.push("bg-orange-600", "text-white", "hover:bg-orange-600");
+        }
+        if (isSelected && !isStart && !isEnd) {
+            extraClasses.push("ring-2", "ring-zinc-900");
+        }
+        const button = createDayButton(String(day), extraClasses);
+        button.addEventListener("click", () => {
+            onSelectDate(currentDate);
+        });
+        gridElement.appendChild(button);
     }
     for (let day = 1; day <= daysInMonth; day += 1) {
-        const currentDate = new Date(Date.UTC(year, month, day));
-        const isSelected = isSameUTCDate(currentDate, selectedDate);
-        const isStart = isSameUTCDate(currentDate, rangeStart);
-        const isEnd = isSameUTCDate(currentDate, rangeEnd);
-        const isBetween = isDateBetweenUTC(currentDate, rangeStart, rangeEnd);
+        numDatesOnGrid++;
+        const currentDate = new Date(year, month, day);
+        const isSelected = isSameDate(currentDate, selectedDate);
+        const isStart = isSameDate(currentDate, rangeStart);
+        const isEnd = isSameDate(currentDate, rangeEnd);
+        const isBetween = isDateBetween(currentDate, rangeStart, rangeEnd);
         const extraClasses = [];
         if (isBetween) {
             extraClasses.push("bg-orange-100", "text-orange-900");
@@ -290,16 +345,39 @@ function renderCalendarGrid({ gridElement, titleElement, viewDate, selectedDate 
         });
         gridElement.appendChild(button);
     }
+    let day = 0;
+    while (numDatesOnGrid < 42) {
+        numDatesOnGrid++;
+        day++;
+        const currentDate = new Date(year, month + 1, day);
+        const isSelected = isSameDate(currentDate, selectedDate);
+        const isStart = isSameDate(currentDate, rangeStart);
+        const isEnd = isSameDate(currentDate, rangeEnd);
+        const isBetween = isDateBetween(currentDate, rangeStart, rangeEnd);
+        const extraClasses = ["text-slate-500"];
+        if (isBetween) {
+            extraClasses.push("bg-orange-100", "text-orange-900");
+        }
+        if (isStart || isEnd) {
+            extraClasses.push("bg-orange-600", "text-white", "hover:bg-orange-600");
+        }
+        if (isSelected && !isStart && !isEnd) {
+            extraClasses.push("ring-2", "ring-zinc-900");
+        }
+        const button = createDayButton(String(day), extraClasses);
+        button.addEventListener("click", () => {
+            onSelectDate(currentDate);
+        });
+        gridElement.appendChild(button);
+    }
 }
+// ============================================================================
+// Single datepicker controller
+// Wires one input to one calendar popover.
+// ============================================================================
 class SingleDatePicker {
-    input;
-    titleElement;
-    gridElement;
-    prevButton;
-    nextButton;
-    popover;
-    state;
     constructor() {
+        var _a;
         this.input = new InputDateBase("single-date", "single-date");
         this.titleElement = getRequiredElement("single-title");
         this.gridElement = getRequiredElement("single-grid");
@@ -312,15 +390,10 @@ class SingleDatePicker {
         });
         this.state = {
             selectedDate: null,
-            viewDate: normalizeUTCDate(new Date()) ?? new Date(),
+            viewDate: (_a = normalizeDate(new Date())) !== null && _a !== void 0 ? _a : new Date(),
         };
         this.bindEvents();
         this.render();
-    }
-    syncViewFromDate(date) {
-        if (!date)
-            return;
-        this.state.viewDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
     }
     render() {
         renderCalendarGrid({
@@ -329,7 +402,7 @@ class SingleDatePicker {
             viewDate: this.state.viewDate,
             selectedDate: this.state.selectedDate,
             onSelectDate: (date) => {
-                const normalized = normalizeUTCDate(date);
+                const normalized = normalizeDate(date);
                 if (!normalized)
                     return;
                 this.state.selectedDate = normalized;
@@ -362,30 +435,32 @@ class SingleDatePicker {
         });
         this.prevButton.addEventListener("click", (event) => {
             event.stopPropagation();
-            const year = this.state.viewDate.getUTCFullYear();
-            const month = this.state.viewDate.getUTCMonth();
-            this.state.viewDate = new Date(Date.UTC(year, month - 1, 1));
+            const year = this.state.viewDate.getFullYear();
+            const month = this.state.viewDate.getMonth();
+            this.state.viewDate = new Date(year, month - 1, 1);
             this.render();
         });
         this.nextButton.addEventListener("click", (event) => {
             event.stopPropagation();
-            const year = this.state.viewDate.getUTCFullYear();
-            const month = this.state.viewDate.getUTCMonth();
-            this.state.viewDate = new Date(Date.UTC(year, month + 1, 1));
+            const year = this.state.viewDate.getFullYear();
+            const month = this.state.viewDate.getMonth();
+            this.state.viewDate = new Date(year, month + 1, 1);
             this.render();
         });
     }
+    syncViewFromDate(date) {
+        if (!date)
+            return;
+        this.state.viewDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    }
 }
+// ============================================================================
+// Range datepicker controller
+// Wires two inputs to one shared calendar and keeps the range ordered.
+// ============================================================================
 class RangeDatePicker {
-    startInput;
-    endInput;
-    titleElement;
-    gridElement;
-    prevButton;
-    nextButton;
-    popover;
-    state;
     constructor() {
+        var _a;
         this.startInput = new InputDateBase("range-start", "range-start");
         this.endInput = new InputDateBase("range-end", "range-end");
         this.titleElement = getRequiredElement("range-title");
@@ -401,28 +476,10 @@ class RangeDatePicker {
             startDate: null,
             endDate: null,
             activeField: "start",
-            viewDate: normalizeUTCDate(new Date()) ?? new Date(),
+            viewDate: (_a = normalizeDate(new Date())) !== null && _a !== void 0 ? _a : new Date(),
         };
         this.bindEvents();
         this.render();
-    }
-    syncViewFromDate(date) {
-        if (!date)
-            return;
-        this.state.viewDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
-    }
-    normalizeRangeOrder() {
-        if (!this.state.startDate || !this.state.endDate)
-            return;
-        const startTime = this.state.startDate.getTime();
-        const endTime = this.state.endDate.getTime();
-        if (endTime < startTime) {
-            const temporaryDate = this.state.startDate;
-            this.state.startDate = this.state.endDate;
-            this.state.endDate = temporaryDate;
-            this.startInput.updateFromDate(this.state.startDate);
-            this.endInput.updateFromDate(this.state.endDate);
-        }
     }
     render() {
         renderCalendarGrid({
@@ -435,7 +492,8 @@ class RangeDatePicker {
                 ? this.state.startDate
                 : this.state.endDate,
             onSelectDate: (date) => {
-                const normalized = normalizeUTCDate(date);
+                var _a;
+                const normalized = normalizeDate(date);
                 if (!normalized)
                     return;
                 if (this.state.activeField === "start") {
@@ -449,7 +507,7 @@ class RangeDatePicker {
                 this.state.endDate = normalized;
                 this.endInput.updateFromDate(normalized);
                 this.normalizeRangeOrder();
-                this.syncViewFromDate(this.state.endDate ?? this.state.startDate);
+                this.syncViewFromDate((_a = this.state.endDate) !== null && _a !== void 0 ? _a : this.state.startDate);
                 this.render();
                 this.popover.close();
             },
@@ -457,16 +515,16 @@ class RangeDatePicker {
     }
     bindEvents() {
         this.startInput.inputElement.addEventListener("focus", () => {
+            var _a;
             this.state.activeField = "start";
-            this.syncViewFromDate(this.state.startDate ?? normalizeUTCDate(new Date()));
+            this.syncViewFromDate((_a = this.state.startDate) !== null && _a !== void 0 ? _a : normalizeDate(new Date()));
             this.popover.open();
             this.render();
         });
         this.endInput.inputElement.addEventListener("focus", () => {
+            var _a, _b;
             this.state.activeField = "end";
-            this.syncViewFromDate(this.state.endDate ??
-                this.state.startDate ??
-                normalizeUTCDate(new Date()));
+            this.syncViewFromDate((_b = (_a = this.state.endDate) !== null && _a !== void 0 ? _a : this.state.startDate) !== null && _b !== void 0 ? _b : normalizeDate(new Date()));
             this.popover.open();
             this.render();
         });
@@ -504,19 +562,40 @@ class RangeDatePicker {
         });
         this.prevButton.addEventListener("click", (event) => {
             event.stopPropagation();
-            const year = this.state.viewDate.getUTCFullYear();
-            const month = this.state.viewDate.getUTCMonth();
-            this.state.viewDate = new Date(Date.UTC(year, month - 1, 1));
+            const year = this.state.viewDate.getFullYear();
+            const month = this.state.viewDate.getMonth();
+            this.state.viewDate = new Date(year, month - 1, 1);
             this.render();
         });
         this.nextButton.addEventListener("click", (event) => {
             event.stopPropagation();
-            const year = this.state.viewDate.getUTCFullYear();
-            const month = this.state.viewDate.getUTCMonth();
-            this.state.viewDate = new Date(Date.UTC(year, month + 1, 1));
+            const year = this.state.viewDate.getFullYear();
+            const month = this.state.viewDate.getMonth();
+            this.state.viewDate = new Date(year, month + 1, 1);
             this.render();
         });
     }
+    syncViewFromDate(date) {
+        if (!date)
+            return;
+        this.state.viewDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    }
+    normalizeRangeOrder() {
+        if (!this.state.startDate || !this.state.endDate)
+            return;
+        const startTime = this.state.startDate.getTime();
+        const endTime = this.state.endDate.getTime();
+        if (endTime < startTime) {
+            const temporaryDate = this.state.startDate;
+            this.state.startDate = this.state.endDate;
+            this.state.endDate = temporaryDate;
+            this.startInput.updateFromDate(this.state.startDate);
+            this.endInput.updateFromDate(this.state.endDate);
+        }
+    }
 }
+// ============================================================================
+// Page bootstrap
+// ============================================================================
 new SingleDatePicker();
 new RangeDatePicker();
