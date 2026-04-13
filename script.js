@@ -323,11 +323,15 @@ function renderCalendarGrid({
         const extraClasses = [];
 
         if (isBetween) {
-            extraClasses.push("bg-blue-100", "text-blue-900");
+            extraClasses.push("bg-orange-100", "text-orange-900");
         }
 
         if (isStart || isEnd) {
-            extraClasses.push("bg-blue-600", "text-white", "hover:bg-blue-600");
+            extraClasses.push(
+                "bg-orange-600",
+                "text-white",
+                "hover:bg-orange-600",
+            );
         }
 
         if (isSelected && !isStart && !isEnd) {
